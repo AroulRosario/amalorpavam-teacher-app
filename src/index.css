@@ -1,0 +1,162 @@
+:root {
+    --primary: #1034A6;
+    --primary-light: #4F83EE;
+    --secondary: #0A2463;
+    --accent: #10B981;
+    --amber: #F59E0B;
+    --red: #EF4444;
+    --bg-main: #F4F7FF;
+    --card-bg: rgba(255, 255, 255, 0.9);
+    --text-main: #0F172A;
+    --text-muted: #64748B;
+    --gray-100: #F1F5F9;
+    --gray-200: #E2E8F0;
+    --glass: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.4);
+}
+
+* {
+    box-sizing: border-box;
+    outline: none;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Outfit', 'Inter', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-main);
+    overflow: hidden;
+    height: 100vh;
+}
+
+#root {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    height: 100vh;
+}
+
+.sidebar {
+    background: #0F172A;
+    color: white;
+    padding: 32px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 12px;
+}
+
+.logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 900;
+    font-size: 20px;
+}
+
+.nav {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #94A3B8;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    cursor: pointer;
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+
+.nav-item:hover,
+.nav-item.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.content {
+    padding: 32px 48px;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+.card {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--gray-200);
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 14px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--gray-200);
+    margin-top: 4px;
+}
+
+.mark-grid {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+.mark-grid th {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 2px solid var(--gray-200);
+    color: var(--text-muted);
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.mark-grid td {
+    padding: 16px 12px;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.mark-input {
+    width: 60px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid var(--gray-200);
+    text-align: center;
+    font-weight: 700;
+}
