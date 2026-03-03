@@ -52,7 +52,7 @@ export function TeacherProvider({ children }) {
     }
 
     // Filtered data for current teacher
-    const myStudents = currentTeacher ? students.filter(s => s.teacherId === currentTeacher.id) : []
+    const myStudents = currentTeacher ? students.filter(s => currentTeacher.classes?.includes(s.class)) : []
     const myExams = currentTeacher ? exams.filter(ex => String(ex.teacherId) === String(currentTeacher.id)) : []
     const myHomework = currentTeacher ? homework.filter(h => h.teacherId === currentTeacher.id) : []
     const myTimetable = currentTeacher ? timetable.filter(t => t.periods?.some(p => String(p.teacherId) === String(currentTeacher.id))) : []
