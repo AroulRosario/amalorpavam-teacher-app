@@ -7,6 +7,7 @@ import {
 import './index.css'
 
 // ── Login Screen ───────────────────────────
+// ── Login Screen ───────────────────────────
 function LoginScreen() {
   const { login } = useTeacher()
   const [email, setEmail] = useState('')
@@ -20,21 +21,33 @@ function LoginScreen() {
   }
 
   return (
-    <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0A2463, #1E50E2)' }}>
-      <div style={{ background: 'white', borderRadius: 24, padding: 40, width: 400, boxShadow: '0 40px 80px rgba(0,0,0,0.3)' }}>
+    <div style={{ height: '100vh', width: '100vw', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #0A2463, #1E50E2)', position: 'fixed', top: 0, left: 0 }}>
+      <div style={{ background: 'white', borderRadius: 24, padding: 40, width: 420, boxShadow: '0 40px 80px rgba(0,0,0,0.3)', zIndex: 10 }}>
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{ width: 60, height: 60, borderRadius: 18, background: 'linear-gradient(135deg, #1034A6, #4F83EE)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 28, fontWeight: 900 }}>A</div>
-          <h2 style={{ margin: 0, fontSize: 22, fontWeight: 900, color: '#0A2463' }}>Staff Portal Login</h2>
-          <p style={{ color: '#64748B', fontSize: 13, marginTop: 4 }}>Amalorpavam Higher Secondary School</p>
+          <div style={{ width: 64, height: 64, borderRadius: 18, background: 'linear-gradient(135deg, #1034A6, #4F83EE)', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: 32, fontWeight: 900 }}>A</div>
+          <h2 style={{ margin: 0, fontSize: 24, fontWeight: 900, color: '#0A2463' }}>Staff Portal Login</h2>
+          <p style={{ color: '#64748B', fontSize: 14, marginTop: 4 }}>Amalorpavam Higher Secondary School</p>
         </div>
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <input className="form-input" placeholder="Email (e.g. anitha@amal.edu)" value={email} onChange={e => setEmail(e.target.value)} />
-          <input className="form-input" type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} />
-          {error && <div style={{ color: '#EF4444', fontSize: 12, fontWeight: 700 }}>{error}</div>}
-          <button className="btn-primary" type="submit" style={{ justifyContent: 'center', width: '100%' }}>Sign In</button>
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B', marginLeft: 4 }}>Email Address</label>
+            <input className="form-input" placeholder="anitha@amal.edu" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <label style={{ fontSize: 12, fontWeight: 700, color: '#64748B', marginLeft: 4 }}>Password</label>
+            <input className="form-input" type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
+          {error && <div style={{ color: '#EF4444', fontSize: 12, fontWeight: 700, padding: '8px 12px', background: '#FEE2E2', borderRadius: 8 }}>{error}</div>}
+          <button className="btn-primary" type="submit" style={{ justifyContent: 'center', width: '100%', padding: '14px', borderRadius: 14, fontSize: 16 }}>Sign In</button>
         </form>
-        <div style={{ marginTop: 24, padding: 16, background: '#F8FAFC', borderRadius: 12, fontSize: 12, color: '#64748B' }}>
-          <strong>Demo:</strong> anitha@amal.edu / teacher123
+        <div style={{ marginTop: 32, padding: 18, background: '#F8FAFC', borderRadius: 16, fontSize: 13, color: '#64748B', border: '1px solid #E2E8F0' }}>
+          <div style={{ fontWeight: 800, color: '#1034A6', marginBottom: 4 }}>Demo Credentials:</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Email:</span> <span style={{ fontFamily: 'monospace' }}>anitha@amal.edu</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <span>Pass:</span> <span style={{ fontFamily: 'monospace' }}>teacher123</span>
+          </div>
         </div>
       </div>
     </div>
@@ -73,11 +86,11 @@ function TeacherApp() {
   const handleSaveMarks = () => { saveMarks(selectedExam.id, markForm); setSelectedExam(null); setMarkForm({}) }
 
   return (
-    <>
+    <div className="app-layout">
       <aside className="sidebar">
         <div className="brand">
           <div className="logo">A</div>
-          <div><h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>Amalorpavam</h3><span style={{ fontSize: 11, opacity: 0.6 }}>Staff Portal v2.0</span></div>
+          <div><h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>Amalorpavam</h3><span style={{ fontSize: 11, opacity: 0.6 }}>Staff Portal v2.1</span></div>
         </div>
         <nav className="nav">
           {tabs.map(t => (
@@ -88,7 +101,7 @@ function TeacherApp() {
         </nav>
         <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#1E50E2', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: 'white' }}>{currentTeacher.name[0]}</div>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: 'white' }}>{currentTeacher.name[0]}</div>
             <div style={{ fontSize: 13, color: 'white' }}>
               <div style={{ fontWeight: 700 }}>{currentTeacher.name}</div>
               <div style={{ opacity: 0.5, fontSize: 11 }}>{currentTeacher.subjects?.join(', ')}</div>
@@ -313,7 +326,7 @@ function TeacherApp() {
           </div>
         )}
       </main>
-    </>
+    </div>
   )
 }
 
