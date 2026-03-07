@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { TeacherProvider, useTeacher } from './context/TeacherContext'
+import AttendanceMarking from './pages/AttendanceMarking'
+import SyllabusPlanner from './pages/SyllabusPlanner'
 import {
   LayoutDashboard, BookOpen, ClipboardCheck, Users, LogOut, Plus, Save,
-  Calendar, Eye, BarChart2, X, Clock, User
+  Calendar, Eye, BarChart2, X, Clock, User, CheckCircle, Toast
 } from 'lucide-react'
 import './index.css'
 
-// ── Login Screen ───────────────────────────
 // ── Login Screen ───────────────────────────
 function LoginScreen() {
   const { login } = useTeacher()
@@ -40,15 +41,6 @@ function LoginScreen() {
           {error && <div style={{ color: '#EF4444', fontSize: 12, fontWeight: 700, padding: '8px 12px', background: '#FEE2E2', borderRadius: 8 }}>{error}</div>}
           <button className="btn-primary" type="submit" style={{ justifyContent: 'center', width: '100%', padding: '14px', borderRadius: 14, fontSize: 16 }}>Sign In</button>
         </form>
-        <div style={{ marginTop: 32, padding: 18, background: '#F8FAFC', borderRadius: 16, fontSize: 13, color: '#64748B', border: '1px solid #E2E8F0' }}>
-          <div style={{ fontWeight: 800, color: '#1034A6', marginBottom: 4 }}>Demo Credentials:</div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Email:</span> <span style={{ fontFamily: 'monospace' }}>anitha@amal.edu</span>
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span>Pass:</span> <span style={{ fontFamily: 'monospace' }}>teacher123</span>
-          </div>
-        </div>
       </div>
     </div>
   )
@@ -56,7 +48,7 @@ function LoginScreen() {
 
 // ── Main App ───────────────────────────────
 function TeacherApp() {
-  const { currentTeacher, logout, myStudents, myExams, myHomework, myTimetable, myPerms, students, addHomework, saveMarks, homework } = useTeacher()
+  const { currentTeacher, logout, myStudents, myExams, myHomework, myTimetable, myPerms, students, classMappings, addHomework, saveMarks, syllabus } = useTeacher()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [selectedExam, setSelectedExam] = useState(null)
   const [markForm, setMarkForm] = useState({})
@@ -67,30 +59,30 @@ function TeacherApp() {
 
   const allTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, perm: null },
+    { id: 'attendance', label: 'Attendance', icon: CheckCircle, perm: 'attendance' },
+    { id: 'syllabus', label: 'Syllabus Planner', icon: BookOpen, perm: 'contentUpload' },
     { id: 'students', label: 'My Students', icon: Users, perm: null },
-    { id: 'homework', label: 'Homework', icon: BookOpen, perm: 'homework' },
-    { id: 'marks', label: 'Mark Entry', icon: ClipboardCheck, perm: 'markEntry' },
+    { id: 'homework', label: 'Homework', icon: ClipboardCheck, perm: 'homework' },
+    { id: 'marks', label: 'Mark Entry', icon: Save, perm: 'markEntry' },
     { id: 'timetable', label: 'My Timetable', icon: Calendar, perm: 'timetableView' },
     { id: 'performance', label: 'Performance', icon: BarChart2, perm: 'studentPerformance' },
   ]
   const tabs = allTabs.filter(t => !t.perm || myPerms[t.perm])
 
-  const toggleHwStudent = (id) => setHwForm(f => ({ ...f, assignedTo: f.assignedTo.includes(id) ? f.assignedTo.filter(x => x !== id) : [...f.assignedTo, id] }))
-  const handleAddHw = (e) => {
-    e.preventDefault()
-    if (!hwForm.topic || !hwForm.deadline || hwForm.assignedTo.length === 0) return
-    addHomework(hwForm)
-    setShowHwModal(false)
-    setHwForm({ sub: '', topic: '', deadline: '', desc: '', assignedTo: [], class: '' })
+  const myAssignments = classMappings.filter(m => (m.subjects || []).some(s => Number(s.teacherId) === Number(currentTeacher.id)))
+
+  const handleSaveMarks = () => {
+    saveMarks(selectedExam.id, markForm)
+    setSelectedExam(null)
+    setMarkForm({})
   }
-  const handleSaveMarks = () => { saveMarks(selectedExam.id, markForm); setSelectedExam(null); setMarkForm({}) }
 
   return (
     <div className="app-layout">
       <aside className="sidebar">
         <div className="brand">
           <div className="logo">A</div>
-          <div><h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>Amalorpavam</h3><span style={{ fontSize: 11, opacity: 0.6 }}>Staff Portal v2.1</span></div>
+          <div><h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>Amalorpavam</h3><span style={{ fontSize: 11, opacity: 0.6 }}>Staff Portal v3.0</span></div>
         </div>
         <nav className="nav">
           {tabs.map(t => (
@@ -104,7 +96,7 @@ function TeacherApp() {
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#10B981', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: 'white' }}>{currentTeacher.name[0]}</div>
             <div style={{ fontSize: 13, color: 'white' }}>
               <div style={{ fontWeight: 700 }}>{currentTeacher.name}</div>
-              <div style={{ opacity: 0.5, fontSize: 11 }}>{currentTeacher.subjects?.join(', ')}</div>
+              <div style={{ opacity: 0.5, fontSize: 11 }}>Teacher Account</div>
             </div>
           </div>
           <button className="nav-item" style={{ color: '#EF4444' }} onClick={logout}><LogOut size={20} /> Sign Out</button>
@@ -112,9 +104,15 @@ function TeacherApp() {
       </aside>
 
       <main className="content">
-        <header style={{ marginBottom: 32 }}>
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0A2463', margin: 0 }}>{tabs.find(t => t.id === activeTab)?.label}</h1>
-          <p style={{ color: '#64748B', marginTop: 4, fontSize: 14 }}>Manage your classes, students, and academic records</p>
+        <header style={{ marginBottom: 32, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 900, color: '#0A2463', margin: 0 }}>{tabs.find(t => t.id === activeTab)?.label}</h1>
+            <p style={{ color: '#64748B', marginTop: 4, fontSize: 14 }}>{currentTeacher.name} · Staff Member</p>
+          </div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: '#64748B' }}>TERM STATUS</div>
+            <div style={{ fontSize: 14, fontWeight: 900, color: '#10B981' }}>SYLLABUS ACTIVE</div>
+          </div>
         </header>
 
         {/* DASHBOARD */}
@@ -122,118 +120,83 @@ function TeacherApp() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20 }}>
               <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>MY STUDENTS</div><div style={{ fontSize: 28, fontWeight: 900, color: '#1034A6' }}>{myStudents.length}</div></div>
-              <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>PENDING EXAMS</div><div style={{ fontSize: 28, fontWeight: 900, color: '#F59E0B' }}>{myExams.filter(e => !e.marks).length}</div></div>
-              <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>HOMEWORK GIVEN</div><div style={{ fontSize: 28, fontWeight: 900, color: '#10B981' }}>{myHomework.length}</div></div>
-              <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>AVG SCORE</div><div style={{ fontSize: 28, fontWeight: 900, color: '#6366F1' }}>{myStudents.length ? Math.round(myStudents.reduce((a, s) => a + s.avg, 0) / myStudents.length) : '—'}%</div></div>
+              <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>COMPLETED UNITS</div><div style={{ fontSize: 28, fontWeight: 900, color: '#10B981' }}>{syllabus.filter(s => s.teacherId === currentTeacher.id && s.status === 'Completed').length}</div></div>
+              <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>HOMEWORK GIVEN</div><div style={{ fontSize: 28, fontWeight: 900, color: '#6366F1' }}>{myHomework.length}</div></div>
+              <div className="card"><div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', marginBottom: 6 }}>AVG PERFORMANCE</div><div style={{ fontSize: 28, fontWeight: 900, color: '#F59E0B' }}>{myStudents.length ? Math.round(myStudents.reduce((a, s) => a + s.avg, 0) / myStudents.length) : '0'}%</div></div>
             </div>
+
             <div className="card">
-              <h3 style={{ marginTop: 0 }}>My Classes</h3>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {currentTeacher.classes?.map(c => <span key={c} style={{ padding: '8px 16px', background: '#E8EFFD', borderRadius: 10, fontWeight: 800, color: '#1034A6', fontSize: 13 }}>{c}</span>)}
+              <h3 style={{ marginTop: 0, fontSize: 18, fontWeight: 900 }}>My Academic Allotments</h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16, marginTop: 16 }}>
+                {myAssignments.map(m => (
+                  <div key={m.id} style={{ background: '#F8FAFC', padding: 16, borderRadius: 16, border: '1.5px solid #E2E8F0' }}>
+                    <div style={{ fontSize: 20, fontWeight: 900, color: '#0A2463', marginBottom: 4 }}>{m.class}</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                      {m.subjects.filter(s => Number(s.teacherId) === Number(currentTeacher.id)).map(s => (
+                        <span key={s.name} style={{ background: 'white', border: '1px solid #E2E8F0', padding: '4px 10px', borderRadius: 8, fontSize: 11, fontWeight: 800, color: '#1E50E2' }}>{s.name}</span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {myAssignments.length === 0 && <div style={{ color: '#94A3B8', fontSize: 14 }}>No classes assigned to you.</div>}
               </div>
             </div>
           </div>
         )}
 
+        {/* ATTENDANCE */}
+        {activeTab === 'attendance' && <AttendanceMarking />}
+
+        {/* SYLLABUS PLANNER */}
+        {activeTab === 'syllabus' && <SyllabusPlanner />}
+
         {/* MY STUDENTS */}
         {activeTab === 'students' && (
-          <div className="card" style={{ overflow: 'hidden' }}>
+          <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr style={{ background: '#F8FAFC' }}>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>NAME</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>CLASS</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>ROLL</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>AVG</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>ATTENDANCE</th>
-                <th style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>FEE</th>
+                <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>NAME</th>
+                <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>CLASS</th>
+                <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>ROLL</th>
+                <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>PERFORMANCE</th>
+                <th style={{ padding: '12px 24px', textAlign: 'left', fontSize: 11, fontWeight: 800, color: '#64748B' }}>ATTENDANCE</th>
               </tr></thead>
               <tbody>
                 {myStudents.map(s => (
                   <tr key={s.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
-                    <td style={{ padding: '14px 16px', fontWeight: 700 }}>{s.name}</td>
-                    <td style={{ padding: '14px 16px' }}>{s.class}</td>
-                    <td style={{ padding: '14px 16px' }}>{s.roll}</td>
-                    <td style={{ padding: '14px 16px' }}><span style={{ fontWeight: 800, color: s.avg >= 80 ? '#10B981' : '#F59E0B' }}>{s.avg}%</span></td>
-                    <td style={{ padding: '14px 16px' }}>{s.attendance}%</td>
-                    <td style={{ padding: '14px 16px' }}><span style={{ fontSize: 11, fontWeight: 800, padding: '3px 10px', borderRadius: 8, background: s.fee === 'Paid' ? '#D1FAE5' : '#FEF3C7', color: s.fee === 'Paid' ? '#059669' : '#D97706' }}>{s.fee}</span></td>
+                    <td style={{ padding: '16px 24px', fontWeight: 800, color: '#0A2463' }}>{s.name}</td>
+                    <td style={{ padding: '16px 24px' }}><span style={{ padding: '4px 10px', background: '#E8EFFD', borderRadius: 8, fontSize: 11, fontWeight: 800, color: '#1E50E2' }}>{s.class}</span></td>
+                    <td style={{ padding: '16px 24px', fontWeight: 600, color: '#64748B' }}>{s.roll}</td>
+                    <td style={{ padding: '16px 24px' }}><div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><div style={{ flex: 1, height: 6, background: '#F1F5F9', borderRadius: 3, overflow: 'hidden' }}><div style={{ width: `${s.avg}%`, height: '100%', background: s.avg >= 80 ? '#10B981' : '#F59E0B' }} /></div><span style={{ fontSize: 12, fontWeight: 800 }}>{s.avg}%</span></div></td>
+                    <td style={{ padding: '16px 24px', fontWeight: 800, color: '#0A2463' }}>{s.attendance}%</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            {myStudents.length === 0 && <div style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>No students mapped to you yet. Ask your Admin to assign students.</div>}
+            {myStudents.length === 0 && <div style={{ padding: 60, textAlign: 'center', color: '#94A3B8' }}>No students mapped to you yet.</div>}
           </div>
         )}
 
-        {/* HOMEWORK */}
+        {/* HOMEWORK (Simplified for now) */}
         {activeTab === 'homework' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
-              <div />
+              <p style={{ color: '#64748B', fontSize: 14 }}>Assign and track homework for your subjects.</p>
               <button className="btn-primary" onClick={() => setShowHwModal(true)}><Plus size={18} /> Assign Homework</button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 20 }}>
               {myHomework.map(h => (
                 <div key={h.id} className="card">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{ fontSize: 10, fontWeight: 900, background: '#E8EFFD', color: '#1034A6', padding: '3px 10px', borderRadius: 20 }}>{h.sub}</span>
-                    <span style={{ fontSize: 10, color: '#EF4444', fontWeight: 800 }}>DUE: {h.deadline}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <span style={{ padding: '4px 10px', background: '#E8EFFD', borderRadius: 8, fontSize: 11, fontWeight: 800, color: '#1E50E2' }}>{h.sub} · {h.class}</span>
+                    <span style={{ fontSize: 11, color: '#EF4444', fontWeight: 800 }}>{h.deadline}</span>
                   </div>
-                  <h4 style={{ margin: '6px 0', fontSize: 16 }}>{h.topic}</h4>
-                  <p style={{ fontSize: 12, color: '#64748B', margin: '4px 0 12px' }}>{h.desc}</p>
-                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {(h.assignedTo || []).map(sid => {
-                      const st = students.find(s => s.id === sid)
-                      return st ? <span key={sid} style={{ fontSize: 10, fontWeight: 700, background: '#F1F5F9', padding: '2px 8px', borderRadius: 6 }}>{st.name.split(' ')[0]}</span> : null
-                    })}
-                  </div>
+                  <h4 style={{ margin: '0 0 8px', fontSize: 16 }}>{h.topic}</h4>
+                  <p style={{ fontSize: 13, color: '#64748B', margin: '0 0 16px' }}>{h.desc}</p>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: '#10B981' }}>{h.assignedTo?.length} Students Assigned</div>
                 </div>
               ))}
             </div>
-
-            {showHwModal && (
-              <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-                <div className="card" style={{ width: 500, maxHeight: '90vh', overflowY: 'auto' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                    <h2 style={{ margin: 0 }}>Assign Homework</h2>
-                    <button onClick={() => setShowHwModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} /></button>
-                  </div>
-                  <form onSubmit={handleAddHw} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                      <div><label style={{ fontSize: 12, fontWeight: 800 }}>Subject</label><input className="form-input" value={hwForm.sub} onChange={e => setHwForm({ ...hwForm, sub: e.target.value })} /></div>
-                      <div><label style={{ fontSize: 12, fontWeight: 800 }}>Class</label>
-                        <select className="form-input" value={hwForm.class} onChange={e => setHwForm({ ...hwForm, class: e.target.value, assignedTo: [] })}>
-                          <option value="">Select Class</option>
-                          {currentTeacher.classes?.map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div><label style={{ fontSize: 12, fontWeight: 800 }}>Topic</label><input className="form-input" value={hwForm.topic} onChange={e => setHwForm({ ...hwForm, topic: e.target.value })} /></div>
-                    <div><label style={{ fontSize: 12, fontWeight: 800 }}>Deadline</label><input type="date" className="form-input" value={hwForm.deadline} onChange={e => setHwForm({ ...hwForm, deadline: e.target.value })} /></div>
-                    <div><label style={{ fontSize: 12, fontWeight: 800 }}>Description</label><textarea className="form-input" style={{ height: 80 }} value={hwForm.desc} onChange={e => setHwForm({ ...hwForm, desc: e.target.value })} /></div>
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                        <label style={{ fontSize: 12, fontWeight: 800 }}><Users size={14} style={{ verticalAlign: 'middle' }} /> Select Students ({hwForm.assignedTo.length})</label>
-                        <button type="button" onClick={() => setHwForm(f => ({ ...f, assignedTo: students.filter(s => s.class === f.class).map(s => s.id) }))} style={{ fontSize: 11, fontWeight: 800, color: '#1034A6', background: 'none', border: 'none', cursor: 'pointer' }}>Select All</button>
-                      </div>
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: 12, border: '1.5px solid #E2E8F0', borderRadius: 12, maxHeight: 140, overflowY: 'auto' }}>
-                        {students.filter(s => s.class === hwForm.class).length === 0
-                          ? <div style={{ padding: 12, color: '#94A3B8', fontSize: 12, width: '100%', textAlign: 'center' }}>Select a class first</div>
-                          : students.filter(s => s.class === hwForm.class).map(s => (
-                            <button type="button" key={s.id} onClick={() => toggleHwStudent(s.id)} style={{
-                              padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', border: '1.5px solid',
-                              borderColor: hwForm.assignedTo.includes(s.id) ? '#1034A6' : '#E2E8F0',
-                              background: hwForm.assignedTo.includes(s.id) ? '#E8EFFD' : 'white',
-                              color: hwForm.assignedTo.includes(s.id) ? '#1034A6' : '#64748B',
-                            }}>{hwForm.assignedTo.includes(s.id) ? '✓ ' : ''}{s.name}</button>
-                          ))
-                        }
-                      </div>
-                    </div>
-                    <button type="submit" className="btn-primary" style={{ justifyContent: 'center' }}>Assign Homework</button>
-                  </form>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
@@ -242,34 +205,39 @@ function TeacherApp() {
           <div className="card">
             {!selectedExam ? (
               <>
-                <h3 style={{ marginTop: 0 }}>Allotted Exams</h3>
-                <p style={{ color: '#64748B', marginBottom: 20 }}>Select an exam to enter marks for your students.</p>
-                {myExams.map(ex => (
-                  <div key={ex.id} onClick={() => setSelectedExam(ex)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', border: '2px solid #F1F5F9', borderRadius: 12, marginBottom: 8, cursor: 'pointer' }}>
-                    <div><strong>{ex.title}</strong><div style={{ fontSize: 12, color: '#64748B' }}>Class {ex.class} · {ex.subject}</div></div>
-                    <ClipboardCheck size={20} color={ex.marks ? '#10B981' : '#1034A6'} />
-                  </div>
-                ))}
-                {myExams.length === 0 && <p style={{ color: '#94A3B8' }}>No exams allotted yet. Wait for your Admin to assign exams.</p>}
+                <h3 style={{ marginTop: 0 }}>Term Exam Allotments</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 20 }}>
+                  {myExams.map(ex => (
+                    <div key={ex.id} onClick={() => setSelectedExam(ex)} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '18px 20px', border: '2px solid #F1F5F9', borderRadius: 16, cursor: 'pointer', background: 'white' }}>
+                      <div><div style={{ fontSize: 14, fontWeight: 900, color: '#0A2463' }}>{ex.title}</div><div style={{ fontSize: 12, color: '#64748B', fontWeight: 600 }}>{ex.class} · {ex.subject}</div></div>
+                      <div style={{ width: 40, height: 40, borderRadius: 12, background: ex.marks ? '#D1FAE5' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ex.marks ? '#10B981' : '#64748B' }}><ClipboardCheck size={20} /></div>
+                    </div>
+                  ))}
+                </div>
               </>
             ) : (
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                  <h3 style={{ margin: 0 }}>Marks: {selectedExam.title}</h3>
-                  <button onClick={() => setSelectedExam(null)} style={{ background: '#F1F5F9', border: 'none', padding: '6px 14px', borderRadius: 8, fontWeight: 700, cursor: 'pointer' }}>← Back</button>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24, alignItems: 'center' }}>
+                  <div><h3 style={{ margin: 0 }}>Entry: {selectedExam.title}</h3><p style={{ margin: 0, fontSize: 13, color: '#64748B' }}>{selectedExam.class} · {selectedExam.subject}</p></div>
+                  <button onClick={() => setSelectedExam(null)} className="btn-outline btn-sm">← Back</button>
                 </div>
-                <table className="mark-grid">
-                  <thead><tr><th>Roll</th><th>Name</th><th>Class</th><th>Marks (/100)</th></tr></thead>
-                  <tbody>
-                    {students.filter(s => s.class === selectedExam.class).map(s => (
-                      <tr key={s.id}>
-                        <td>{s.roll}</td><td style={{ fontWeight: 700 }}>{s.name}</td><td>{s.class}</td>
-                        <td><input className="mark-input" type="number" defaultValue={selectedExam.marks?.[s.id] || ''} onChange={e => setMarkForm({ ...markForm, [s.id]: e.target.value })} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                <button className="btn-primary" style={{ marginTop: 24, width: '100%', justifyContent: 'center' }} onClick={handleSaveMarks}><Save size={18} /> Save & Sync Marks</button>
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <thead><tr style={{ background: '#F8FAFC' }}><th style={{ padding: 12, textAlign: 'left' }}>ROLL</th><th style={{ padding: 12, textAlign: 'left' }}>NAME</th><th style={{ padding: 12, textAlign: 'center' }}>MARKS (/100)</th></tr></thead>
+                    <tbody>
+                      {students.filter(s => s.class === selectedExam.class).map(s => (
+                        <tr key={s.id} style={{ borderBottom: '1px solid #F1F5F9' }}>
+                          <td style={{ padding: 16 }}>{s.roll}</td>
+                          <td style={{ padding: 16, fontWeight: 800 }}>{s.name}</td>
+                          <td style={{ padding: 16, textAlign: 'center' }}>
+                            <input className="form-input" style={{ width: 80, textAlign: 'center' }} type="number" defaultValue={selectedExam.marks?.[s.id] || ''} onChange={e => setMarkForm({ ...markForm, [s.id]: e.target.value })} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button className="btn-primary" style={{ marginTop: 24, width: '100%', height: 50, justifyContent: 'center' }} onClick={handleSaveMarks}><Save size={18} /> Finalize & Submit Marks</button>
               </div>
             )}
           </div>
@@ -277,55 +245,29 @@ function TeacherApp() {
 
         {/* TIMETABLE */}
         {activeTab === 'timetable' && (
-          <div>
-            {myTimetable.length === 0 ? (
-              <div className="card" style={{ padding: 48, textAlign: 'center', color: '#94A3B8' }}>
-                <Calendar size={48} style={{ marginBottom: 16, opacity: 0.3 }} />
-                <div style={{ fontWeight: 700 }}>No timetable entries found for you.</div>
-                <div style={{ fontSize: 13, marginTop: 4 }}>Ask your Admin to set up the timetable and assign you to periods.</div>
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                {myTimetable.map(entry => (
-                  <div key={entry.id} className="card">
-                    <div style={{ fontWeight: 800, fontSize: 16, marginBottom: 16, color: '#0A2463' }}>
-                      <Calendar size={16} style={{ verticalAlign: 'middle', marginRight: 8 }} />{entry.class} — {entry.day}
-                    </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                      {entry.periods.filter(p => String(p.teacherId) === String(currentTeacher.id)).map((p, i) => (
-                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 16px', background: '#F8FAFC', borderRadius: 10 }}>
-                          <Clock size={16} color="#64748B" />
-                          <span style={{ fontWeight: 600, fontSize: 13, width: 140 }}>{p.time}</span>
-                          <span style={{ fontWeight: 800, background: '#E8EFFD', color: '#1034A6', padding: '4px 12px', borderRadius: 8, fontSize: 13 }}>{p.subject}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* PERFORMANCE */}
-        {activeTab === 'performance' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 20 }}>
-            {myStudents.map(s => (
-              <div key={s.id} className="card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-                  <div style={{ width: 44, height: 44, borderRadius: 14, background: '#E8EFFD', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, color: '#1034A6', fontSize: 16 }}>{s.name.split(' ').map(n => n[0]).join('')}</div>
-                  <div><div style={{ fontWeight: 800 }}>{s.name}</div><div style={{ fontSize: 12, color: '#64748B' }}>{s.class} · Roll {s.roll}</div></div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+            {myTimetable.map(day => (
+              <div key={day.id} className="card">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                  <Calendar size={18} color="#1E50E2" />
+                  <h3 style={{ margin: 0, fontSize: 16, fontWeight: 900 }}>{day.day} · {day.class}</h3>
                 </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
-                  <div style={{ textAlign: 'center', padding: 8, background: '#F8FAFC', borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 800, color: '#64748B' }}>AVG</div><div style={{ fontWeight: 900, color: s.avg >= 80 ? '#10B981' : '#F59E0B' }}>{s.avg}%</div></div>
-                  <div style={{ textAlign: 'center', padding: 8, background: '#F8FAFC', borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 800, color: '#64748B' }}>ATT.</div><div style={{ fontWeight: 900, color: '#1034A6' }}>{s.attendance}%</div></div>
-                  <div style={{ textAlign: 'center', padding: 8, background: '#F8FAFC', borderRadius: 8 }}><div style={{ fontSize: 10, fontWeight: 800, color: '#64748B' }}>FEE</div><div style={{ fontWeight: 900, color: s.fee === 'Paid' ? '#10B981' : '#EF4444' }}>{s.fee}</div></div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 12 }}>
+                  {day.periods.filter(p => Number(p.teacherId) === Number(currentTeacher.id)).map((p, idx) => (
+                    <div key={idx} style={{ background: '#F8FAFC', padding: 16, borderRadius: 12, border: '1px solid #E2E8F0' }}>
+                      <div style={{ fontSize: 11, fontWeight: 800, color: '#64748B', display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}><Clock size={12} /> {p.time}</div>
+                      <div style={{ fontSize: 15, fontWeight: 900, color: '#0A2463' }}>{p.subject}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
             ))}
+            {myTimetable.length === 0 && <div className="card" style={{ padding: 60, textAlign: 'center', color: '#94A3B8' }}>No periods yet.</div>}
           </div>
         )}
       </main>
+
+      {/* Shared Modals etc could go here */}
     </div>
   )
 }
